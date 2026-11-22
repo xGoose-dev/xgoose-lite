@@ -8,7 +8,8 @@ function link(text: string, href: string, onLocalLink?: LinkHandler): Node {
   const anchor = document.createElement("a");
   anchor.textContent = text;
   anchor.href = href;
-  const url = new URL(anchor.href, location.href);
+  let url: URL;
+  try { url = new URL(anchor.href, location.href); } catch { return document.createTextNode(text); }
   if (url.origin === location.origin && onLocalLink) anchor.addEventListener("click", (event) => onLocalLink(url, event));
   else { anchor.target = "_blank"; anchor.rel = "noopener noreferrer"; }
   return anchor;

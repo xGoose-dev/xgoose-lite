@@ -3,7 +3,7 @@ import type { LiteTool, ToolContext } from "./types.js";
 /** Elements the page tools must never read or operate. */
 const IGNORED = "[data-xgoose-lite],[data-xgoose-ignore],script,style,noscript,template,[hidden],[inert],[contenteditable]:not([contenteditable=false])";
 const INTERACTIVE = 'a[href],button,input:not([type=hidden]),select,textarea,summary,[role=button],[role=tab],[role=link],[role=menuitem],[role=switch],[role=checkbox]';
-const SENSITIVE_INPUT = /^(password|file|hidden)$/i;
+const TEXT_INPUT = /^(text|search|url|tel|email)$/i;
 const SENSITIVE_AUTOCOMPLETE = /cc-|one-time-code|current-password|new-password/i;
 
 const clean = (text: string | null | undefined) => (text ?? "").replace(/\s+/g, " ").trim();
@@ -16,7 +16,7 @@ function visible(element: Element): boolean {
   return style.visibility !== "hidden" && style.opacity !== "0";
 }
 
-function pageText(root: Element, max = 5201): string {
+function pageText(root: Element, max = 5201, start?: Element, end?: Element): string {
   if (root.closest(IGNORED + ",textarea")) return "";
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
@@ -24,8 +24,10 @@ function pageText(root: Element, max = 5201): string {
       return node.parentElement && visible(node.parentElement) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
     },
   });
+  if (start) walker.currentNode = start;
   let text = "";
   for (let node = walker.nextNode(); node && text.length < max; node = walker.nextNode()) {
+    if (end && (end.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)) break;
     const part = clean(node.textContent);
     if (part) text += (text ? " " : "") + part.slice(0, max - text.length);
   }
@@ -35,7 +37,9 @@ function pageText(root: Element, max = 5201): string {
 function accessibleName(element: Element): string {
   const ids = element.getAttribute("aria-labelledby")?.split(/\s+/) ?? [];
   const labelled = ids.map(id => document.getElementById(id)).map(el => el ? pageText(el, 90) : "").join(" ").trim();
-  return clip(clean(element.getAttribute("aria-label") || labelled || pageText(element, 90) ||
+  const labels = (element as HTMLInputElement).labels;
+  const nativeLabel = labels ? [...labels].map(label => pageText(label, 90)).join(" ").trim() : "";
+  return clip(clean(element.getAttribute("aria-label") || labelled || nativeLabel || pageText(element, 90) ||
     element.getAttribute("placeholder") || element.getAttribute("title") || element.getAttribute("alt")), 90);
 }
 
@@ -64,7 +68,7 @@ export class ElementRegistry {
   };
   resolve(id: unknown): Element {
     const element = typeof id === "string" ? this.elements.get(id)?.deref() : undefined;
-    if (!element || !element.isConnected) throw new Error("That element is no longer on the page. Look it up again.");
+    if (!element || !element.isConnected || !visible(element)) throw new Error("That element is no longer on the page. Look it up again.");
     return element;
   }
 }
@@ -82,24 +86,24 @@ export function createPageTools(registry: ElementRegistry, navigate?: (url: stri
     label: "Reading the page",
     run({ section }: { section?: string }) {
       const root = pageRoot();
-      const headings = [...root.querySelectorAll("h1,h2,h3")].filter(visible)
-        .map((heading) => ({ level: Number(heading.tagName[1]), text: clip(clean(heading.getAttribute("aria-label") || pageText(heading, 100)), 100), ref: registry.ref(heading) }))
-        .filter((heading) => heading.text).slice(0, 40);
-      let scope: Element = root;
+      const elements = [...root.querySelectorAll("h1,h2,h3,h4,h5,h6")].filter(visible);
+      const headings = elements.map((heading) => ({ level: Number(heading.tagName[1]), text: clip(clean(heading.getAttribute("aria-label") || pageText(heading, 100)), 100), ref: registry.ref(heading) }))
+        .filter((heading) => heading.text);
+      let start: Element | undefined, end: Element | undefined;
       if (section) {
         const wanted = section.toLowerCase();
         const match = headings.find((heading) => heading.ref === section || heading.text.toLowerCase().includes(wanted));
         if (!match) throw new Error(`No heading matches "${section}".`);
-        const heading = registry.resolve(match.ref);
-        scope = heading.closest("section,article") ?? heading.parentElement ?? root;
+        start = registry.resolve(match.ref);
+        end = elements.slice(elements.indexOf(start) + 1).find(heading => Number(heading.tagName[1]) <= match.level);
       }
-      const text = pageText(scope);
+      const text = pageText(root, 5201, start, end);
       const limit = 5200;
       return {
         title: document.title,
         url: location.href,
         language: document.documentElement.lang || undefined,
-        ...(section ? {} : { headings }),
+        ...(section ? {} : { headings: headings.slice(0, 40) }),
         text: clip(text, limit),
         ...(text.length > limit ? { truncated: true, hint: "Use `section` or find_on_page for the rest." } : {}),
       };
@@ -154,7 +158,8 @@ export function createPageTools(registry: ElementRegistry, navigate?: (url: stri
       const element = registry.resolve(ref);
       context.highlight(element);
       await settle(450);
-      return { ok: true, shown: accessibleName(element) || pageText(element, 90) };
+      const current = registry.resolve(ref);
+      return { ok: true, shown: accessibleName(current) || pageText(current, 90) };
     },
   };
 
@@ -176,11 +181,13 @@ export function createPageTools(registry: ElementRegistry, navigate?: (url: stri
         context.highlight(target);
         await settle(350);
         context.signal.throwIfAborted();
+        registry.resolve(ref);
         if (navigate && !url.hash) navigate(url.pathname + url.search); else target.click();
       } else {
         context.highlight(target);
         await settle(350);
         context.signal.throwIfAborted();
+        registry.resolve(ref);
         target.click();
       }
       await settle(600);
@@ -197,8 +204,8 @@ export function createPageTools(registry: ElementRegistry, navigate?: (url: stri
       const field = registry.resolve(ref);
       if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) || !visible(field) || field.disabled || field.readOnly)
         throw new Error("That element is not an editable text field.");
-      if (field instanceof HTMLInputElement && (SENSITIVE_INPUT.test(field.type) || SENSITIVE_AUTOCOMPLETE.test(field.autocomplete)))
-        throw new Error("xgoose lite does not fill passwords, payment or one-time-code fields.");
+      if ((field instanceof HTMLInputElement && !TEXT_INPUT.test(field.type)) || SENSITIVE_AUTOCOMPLETE.test(field.autocomplete))
+        throw new Error("Choose a regular text field or search box.");
       context.highlight(field);
       field.focus();
       // Frameworks track the value through the native setter.
@@ -207,7 +214,7 @@ export function createPageTools(registry: ElementRegistry, navigate?: (url: stri
       field.dispatchEvent(new Event("input", { bubbles: true }));
       field.dispatchEvent(new Event("change", { bubbles: true }));
       await settle(500);
-      return { ok: true, field: accessibleName(field) };
+      return { ok: true, field: accessibleName(registry.resolve(ref)) };
     },
   };
 

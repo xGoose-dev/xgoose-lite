@@ -37,27 +37,29 @@ export function hostedCompletion(signal: AbortSignal): { complete: Completion; c
   if (!popup) throw new Error("Allow the xgoose sign-in popup, then try again.");
   let pending: { id: string; resolve(value: Response): void; reject(error: Error): void; body: unknown } | undefined;
   let ready = false;
+  let closed: Error | undefined;
   function send() {
     if (ready && pending) popup!.postMessage({ type: "xgl:chat", id: pending.id, body: pending.body }, url.origin);
   }
   function receive(event: MessageEvent) {
     if (event.source !== popup || event.origin !== url.origin) return;
     const msg = event.data;
-    if (msg?.type === "xgl:loaded") clearTimeout(handshake);
-    if (msg?.type === "xgl:approved" && !ready) { ready = true; send(); }
+    if (msg?.type === "xgl:loaded" && !ready) { clearTimeout(handshake); ready = true; send(); }
     if (pending && msg?.type === "xgl:result" && msg.id === pending.id) {
       pending.resolve(Response.json(msg.data, { status: msg.status }));
       pending = undefined;
     }
   }
   function close(reason?: unknown) {
+    if (closed) return;
+    closed = new Error(typeof reason === "string" ? reason : "xgoose authorization closed or expired. Send again to reconnect.");
     clearTimeout(handshake);
     clearInterval(watch);
     clearTimeout(deadline);
     window.removeEventListener("message", receive);
     signal.removeEventListener("abort", close);
     popup!.close();
-    pending?.reject(new Error(typeof reason === "string" ? reason : "xgoose authorization closed or expired. Send again to reconnect."));
+    pending?.reject(closed);
     pending = undefined;
   }
   window.addEventListener("message", receive);
@@ -66,6 +68,7 @@ export function hostedCompletion(signal: AbortSignal): { complete: Completion; c
   const deadline = window.setTimeout(close, 10 * 60_000);
   signal.addEventListener("abort", close, { once: true });
   return { close, complete: (body) => new Promise((resolve, reject) => {
+    if (closed) return reject(closed);
     pending = { id: Array.from(crypto.getRandomValues(new Uint32Array(4))).join("-"), body, resolve, reject };
     send();
   }) };

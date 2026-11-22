@@ -94,6 +94,7 @@ export function init(initial: LiteOptions = {}): LiteController {
   async function ask(text: string, retry = false) {
     const question = text.trim();
     if (!question || run) return;
+    panel.clearRetry();
     panel.setOpen(true);
     lastQuestion = question;
     if (!retry) {

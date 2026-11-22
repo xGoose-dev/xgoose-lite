@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { serve } from "../scripts/serve.mjs";
@@ -73,6 +72,12 @@ try {
     assert.equal(path,"/ai/v1/chat/completions");
     assert.equal(route.request().postDataJSON().stream,false);
     hostedCalls++;
+    if (hostedCalls === 1) {
+      return route.fulfill({json:answer({role:"assistant",tool_calls:[{type:"function",id:"lookup",function:{name:"read_page",arguments:"{}"}}]})});
+    }
+    const {messages} = route.request().postDataJSON();
+    assert.equal(messages.findLast(m => m.role === "user").content, "Ask Hosted");
+    assert.equal(messages.at(-1).tool_call_id, "lookup");
     return route.fulfill({json:answer({role:"assistant",content:"Hosted answer"})});
   });
   await page.evaluate(() => XGooseLite.init({provider:"hosted",locale:"en"}).open());
@@ -81,13 +86,14 @@ try {
   await page.getByRole("textbox").press("Enter");
   const popup = await opened;
   await popup.getByText(origin,{exact:true}).waitFor();
+  await popup.getByText("Ask Hosted",{exact:true}).waitFor();
   await popup.getByRole("button",{name:"Allow this question"}).click();
   await popup.getByRole("status").getByText(/Sign in to xgoose/).waitFor();
   assert.equal(hostedCalls,0);
   signedIn = true;
   await popup.getByRole("button",{name:"Allow this question"}).click();
   await page.getByText("Hosted answer",{exact:true}).waitFor();
-  assert.equal(hostedCalls,1);
+  assert.equal(hostedCalls,2);
   console.log("PASS two-origin Hosted popup, signed-out recovery, explicit approval and chat");
 
   await page.setViewportSize({width:375,height:750});
@@ -97,7 +103,12 @@ try {
   const esm = await import("../dist/xgoose-lite.mjs");
   assert.equal(typeof esm.init, "function");
   assert.equal(esm.defaults.provider, "local");
-  assert.ok((await readFile("dist/xgoose-lite.site.js","utf8")).includes("DOMContentLoaded"));
+  await page.route(origin + "/head-embed", route => route.fulfill({contentType:"text/html",
+    body:'<!doctype html><html lang="en"><head><script src="/xgoose-lite.site.js"></script></head><body>' + fixture + '</body></html>'}));
+  await page.goto(origin + "/head-embed");
+  await page.getByRole("button",{name:"Ask xgoose about this page"}).click();
+  await page.getByRole("button",{name:"Show page outline"}).click();
+  await page.locator(".ai").getByText("Field manual",{exact:true}).first().waitFor();
   assert.deepEqual(errors,[]);
   console.log("PASS mobile studio, default distribution and ESM entry");
 } finally {

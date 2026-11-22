@@ -46,6 +46,7 @@ export class Panel {
   private spotFrame = 0;
   private busy = false;
   private open = false;
+  private retryButton?: HTMLButtonElement;
   private quota: number | null = null;
   private greeting = "";
   private footerNote = "";
@@ -258,6 +259,11 @@ export class Panel {
     };
   }
 
+  clearRetry() {
+    this.retryButton?.remove();
+    this.retryButton = undefined;
+  }
+
   addNotice(kind: "error" | "limit" | "info", title: string | null, body: string, buttons: { label: string; href?: string; primary?: boolean; onClick?: () => void }[] = []) {
     const notice = el("div", "notice");
     notice.dataset.kind = kind;
@@ -269,6 +275,7 @@ export class Panel {
         const control = button.href ? el("a", "pill", button.label) : el("button", "pill", button.label);
         if (control instanceof HTMLAnchorElement) control.href = button.href!; else control.type = "button";
         if (button.primary) control.dataset.primary = "";
+        if (button.onClick && control instanceof HTMLButtonElement) this.retryButton = control;
         if (button.onClick) control.addEventListener("click", () => { notice.remove(); button.onClick!(); });
         row.append(control);
       }
