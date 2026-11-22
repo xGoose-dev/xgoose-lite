@@ -214,7 +214,7 @@ export function createPageTools(registry: ElementRegistry, navigate?: (url: stri
       field.dispatchEvent(new Event("input", { bubbles: true }));
       field.dispatchEvent(new Event("change", { bubbles: true }));
       await settle(500);
-      return { ok: true, field: accessibleName(registry.resolve(ref)) };
+      return { ok: true };
     },
   };
 

@@ -70,7 +70,9 @@ function initialize() {
     if (!first) {
       const question = messages.findLast(message => message?.role === "user")?.content;
       if (typeof question !== "string" || !question.trim()) return deny();
-      first = msg;
+      const {model, tools} = msg.body;
+      first = {id:msg.id, body:{messages, model, tools}};
+      document.querySelector("#request").textContent = JSON.stringify({...first.body, stream:false}, null, 2);
       document.querySelector("#question").textContent = question;
       document.querySelector("#model").textContent = "Model: " + (msg.body.model || "xgoose default");
       approve.disabled = false;

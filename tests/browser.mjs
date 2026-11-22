@@ -87,6 +87,10 @@ try {
   const popup = await opened;
   await popup.getByText(origin,{exact:true}).waitFor();
   await popup.getByText("Ask Hosted",{exact:true}).waitFor();
+  await popup.getByText("Review the full initial request").click();
+  const consent = JSON.parse(await popup.locator("#request").innerText());
+  assert.equal(consent.messages.at(-1).content, "Ask Hosted");
+  assert.ok(consent.tools.some(t => t.function.name === "read_page"));
   await popup.getByRole("button",{name:"Allow this question"}).click();
   await popup.getByRole("status").getByText(/Sign in to xgoose/).waitFor();
   assert.equal(hostedCalls,0);
