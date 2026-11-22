@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>xgoose lite · 嵌入配置器</title><!-- css --></head>
+<body><header><span class="brand"><!-- goose -->xgoose <b>lite</b></span><span>网站嵌入配置器</span></header>
+<main><section class="workbench"><h1>为你的网站配置助手</h1><p class="intro">调整助手在页面上的表现，下载一个 JS 文件即可嵌入。</p>
+<form id="settings">
+<fieldset><legend>助手外观</legend>
+<label>助手名称<input name="name" maxlength="60" required></label>
+<div class="pair"><label>主题<select name="theme"><option value="auto">跟随网站</option><option value="light">浅色</option><option value="dark">深色</option></select></label>
+<label>强调色<input name="accent" type="color"></label></div>
+<label>界面语言<select name="locale"><option value="">跟随页面</option><option value="zh">简体中文</option><option value="en">English</option><option value="es">Español</option></select></label>
+<label>欢迎语<input name="greeting" placeholder="使用内置欢迎语"></label>
+<label>建议提问<textarea name="suggestions" rows="2" placeholder="每行一个，留空使用默认设置"></textarea></label>
+</fieldset>
+<fieldset><legend>对话服务</legend>
+<label>额度来源<select name="provider"><option value="local">本地体验 · 无需 token</option><option value="site">网站登录 · 使用本站额度</option><option value="hosted">xgoose 登录 · 使用访客额度</option></select></label>
+<p id="providerHelp" class="help"></p>
+<div id="siteFields" hidden><label>本站 token 接口<input name="tokenUrl" value="/api/xgoose/token"></label>
+<label>Chat Completions 接口<input name="endpoint" value="/api/xgoose/chat"></label></div>
+<div id="aiFields" hidden><label>模型<input name="model" placeholder="留空使用服务端默认模型"></label>
+<label>助手指令<textarea name="instructions" rows="2" placeholder="例如：优先引用本站文档"></textarea></label></div>
+</fieldset>
+<fieldset><legend>页面工具</legend><div class="checks" id="tools"></div></fieldset>
+<button class="download" type="submit">下载配置好的 JS <span aria-hidden="true">↓</span></button>
+<output id="result" aria-live="polite"></output>
+</form></section>
+<aside><div class="preview-top"><h2>嵌入预览</h2><span>本地体验</span></div>
+<iframe id="preview" title="示例网站与助手"></iframe>
+<section class="install"><h2>放到你的网站</h2><p>把下载的文件放在网站根目录，并在页面中加入这一行。</p>
+<code>&lt;script defer src="/xgoose-lite.site.js"&gt;&lt;/script&gt;</code></section></aside>
+</main><!-- studio --></body></html>
