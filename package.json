@@ -5,7 +5,7 @@
   "license":"MIT","type":"module",
   "main":"./dist/xgoose-lite.mjs","types":"./dist/types/index.d.ts",
   "exports":{".":{"types":"./dist/types/index.d.ts","import":"./dist/xgoose-lite.mjs"},"./browser":"./dist/xgoose-lite.js"},
-  "files":["dist","README.md","LICENSE"],
+  "files":["dist","README.md","README.zh-CN.md","studio/goose.svg","docs/page-search.png","docs/page-search.zh-CN.png","LICENSE"],
   "scripts":{"build":"tsc && node scripts/build.mjs","start":"node scripts/serve.mjs","test":"npm run build && node tests/browser.mjs","prepack":"npm run build"},
   "devDependencies":{"esbuild":"0.25.12","playwright":"1.56.1","typescript":"5.9.3"}
 }
