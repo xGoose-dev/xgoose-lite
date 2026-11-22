@@ -37,7 +37,7 @@ function settings() {
 const tips = {
   local:"直接在浏览器内搜索本页、查看大纲。其余工具可供 AI 模式调用。",
   site:"访客登录本站后，由同源接口签发短期 token。聊天接口接受 Bearer token。",
-  hosted:"访客在 xgoose 官方窗口登录并授权本次提问。此模式需官网先上线授权页。",
+  hosted:"访客在 xgoose 官方窗口查看提问并授权，模型调用使用访客自己的 Hosted 额度。",
 };
 let previewReady = false;
 function update() {
