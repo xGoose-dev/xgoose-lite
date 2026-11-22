@@ -2,7 +2,9 @@
 
 给普通网站的 xgoose 页面助手。站长在单页配置器里调整外观、欢迎语、建议提问、模型、指令和页面工具。下载的 JS 已包含运行时与设置。无需安装浏览器扩展。
 
-## 试用
+[打开官网配置器](https://xgoose.org/lite/)
+
+## 本地试用
 
 需要 Node.js 22+。在项目目录运行：
 
@@ -78,7 +80,7 @@ app.post("/api/xgoose/chat", verifyChatGrant, handleMeteredChat);
 
 选择 `hosted`。访客发送问题时，助手打开官方授权窗口。访客在那里登录并允许本次提问，授权窗用 xgoose 第一方登录 cookie 调用现有的 `/me`、`/auth/refresh` 和 `/ai/v1/chat/completions`。嵌入页只收到模型回答和工具调用。每次授权最多六次模型调用，限时十分钟，可随时关闭窗口结束授权。Hosted 采用完整 JSON 回答，模型默认由官网选择。
 
-**上线依赖**：xgoose 官网维护者需要将构建出的 `dist/lite/connect/index.html` 与 `connect.js` 一起放到 `https://xgoose.org/lite/connect/`。此目录是第一方授权页的独立发布产物。站长只需嵌入配置好的 JS。保留官网防嵌框设置，并允许官方授权页保留与嵌入页之间的 popup opener。启用严格 COOP 隔离的嵌入页应使用本站 token 模式。授权页上线前，可运行浏览器测试验证协议。
+**官网发布**：官网维护者将构建出的 `dist/lite/connect/index.html` 与 `connect.js` 一起放到 `https://xgoose.org/lite/connect/`。此目录是第一方授权页的独立发布产物。站长只需嵌入配置好的 JS。保留官网防嵌框设置，并允许官方授权页保留与嵌入页之间的 popup opener。启用严格 COOP 隔离的嵌入页应使用本站 token 模式。本地浏览器测试使用模拟接口验证协议。
 
 ## 开发与验证
 
