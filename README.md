@@ -4,11 +4,9 @@
 
 Give visitors a little goose that knows its way around your page. Drop it into a field guide and a reader can find the viewing deck. Give it a model and a booking tool, and a visitor can ask which tours still have seats. You choose what the goose can read and what it can do. Visitors just open your website.
 
-给网站添一只认路的小鹅。访客可以用它查找本页内容；接入模型和你的站点工具后，还能直接在页面上提问、办事。[阅读完整中文指南](README.zh-CN.md)
-
 **[Open the configurator](https://xgoose.org/lite/)** · [Default embed script](https://xgoose.org/lite/xgoose-lite.site.js) · [MIT license](LICENSE)
 
-![A bilingual field guide with xgoose lite open. Searching for “viewing deck” and “观察台” finds the matching English and Chinese passages.](docs/page-search.png)
+![The xgoose lite panel finds the viewing deck directions and the binoculars checklist in a field guide.](docs/page-search.png)
 
 ## Try it with one script
 
@@ -18,7 +16,7 @@ Paste this into an HTML page, open **Ask xgoose**, and search for a word on that
 <script defer src="https://xgoose.org/lite/xgoose-lite.site.js"></script>
 ```
 
-To make it yours, open the configurator. Set the name, appearance, greeting and suggested questions. Choose a provider and the page tools you want to enable. Click **下载配置好的 JS** to download the runtime and settings as one file. Put it at the root of your site and use this tag. The configurator preview always runs locally. Your provider choice takes effect on the embedded site. [Configure your assistant](https://xgoose.org/lite/)
+To make it yours, open the configurator. Set the name, appearance, greeting and suggested questions. Choose a provider and the page tools you want to enable. Use the download button at the bottom of the form to save the runtime and settings as one file. Put it at the root of your site and use this tag. The configurator preview always runs locally. Your provider choice takes effect on the embedded site. [Configure your assistant](https://xgoose.org/lite/)
 
 ```html
 <script defer src="/xgoose-lite.site.js"></script>

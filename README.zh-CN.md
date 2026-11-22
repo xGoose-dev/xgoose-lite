@@ -6,7 +6,7 @@
 
 **[打开官网配置器](https://xgoose.org/lite/)** · [默认嵌入脚本](https://xgoose.org/lite/xgoose-lite.site.js) · [MIT 许可证](LICENSE)
 
-![在双语观鸟手册中打开 xgoose lite，分别搜索 viewing deck 和「观察台」，助手找到了对应的英文与中文段落。](docs/page-search.png)
+![在观鸟手册中搜索「观察台」和「望远镜」，小鹅分别找到了路线和出行清单。](docs/page-search.zh-CN.png)
 
 ## 一行脚本，先在自己的页面试试
 
